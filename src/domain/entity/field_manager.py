@@ -64,20 +64,20 @@ class FieldManager:
         self._img = img
         self._board_area_xmin, self._board_area_xmax = find_board_x(img)
 
-    def get_next_area(self, player_num: int) -> np.ndarray:
+    def get_next_field(self, player_num: int) -> np.ndarray:
         return self._img[
                self._NEXT_AREA_YMIN:self._NEXT_AREA_YMAX,
                self._NEXT_AREA_XMIN[player_num]:self._NEXT_AREA_XMAX[player_num]
                ]
 
-    def get_score_area(self, player_num: int) -> np.ndarray:
+    def get_score_field(self, player_num: int) -> np.ndarray:
         return self._img[
                self._SCORE_AREA_YMIN:self._SCORE_AREA_YMAX,
                self._SCORE_AREA_XMIN[player_num]:self._SCORE_AREA_XMAX[
                    player_num]
                ]
 
-    def get_board_area(self, player_num: int) -> np.ndarray:
+    def get_board_field(self, player_num: int) -> np.ndarray:
         return self._img[
                self._BOARD_AREA_YMIN:self._BOARD_AREA_YMAX,
                self._board_area_xmin[player_num]:self._board_area_xmax[

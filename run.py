@@ -1,6 +1,6 @@
 from absl import app, flags, logging
 
-from get_game_flow_usecase import GetGameFlowUsecase
+from src.application import GetGameFlowUsecase
 
 FLAGS = flags.FLAGS
 

@@ -4,9 +4,9 @@ from src.application import GetGameFlowUsecase
 
 FLAGS = flags.FLAGS
 
-# TODO help(third argument)
+# TODO Default Value(second argument), help(third argument)
 flags.DEFINE_string('mode', 'get_game_flow', '')
-flags.DEFINE_string('input_file', None, '')
+flags.DEFINE_string('input_file', './data/20210328_piponeer_makky.mp4', '')
 
 
 def main(_):

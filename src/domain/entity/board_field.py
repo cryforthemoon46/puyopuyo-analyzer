@@ -60,7 +60,9 @@ class BoardField:
         self._current_status = '-' * BOARD_ROW * BOARD_COLUMN
 
     def __len__(self):
-        return BOARD_ROW * BOARD_COLUMN - self._current_status.count('-')
+        # おじゃまぷよ以外のぷよの数を返す
+        return BOARD_ROW * BOARD_COLUMN - self._current_status.count(
+            '-') - self._current_status.count('n')
 
     def __str__(self):
         return self._current_status
@@ -91,7 +93,7 @@ class BoardField:
             for i in range(BOARD_ROW):
                 offset = coordinate2offset([i, j])
                 target_puyo = self._current_status[offset]
-                if target_puyo == '-':
+                if target_puyo == '-' or target_puyo == 'n':
                     break
                 connected_puyo, visited = self._get_connected_puyo(offset,
                                                                    visited)

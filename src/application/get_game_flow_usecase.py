@@ -8,6 +8,10 @@ from ..domain.value import AttackData
 
 
 class GetGameFlowUsecase(BaseUsecase):
+    def __init__(self, input_path):
+        super().__init__(input_path)
+        self._attack_data = None
+
     def run(self):
         for frame_num in tqdm(range(self._total_frames)):
             _, frame = self._cap.read()
@@ -22,8 +26,7 @@ class GetGameFlowUsecase(BaseUsecase):
                 self._next_fields = {1: NextField(self._fps),
                                      -1: NextField(self._fps)}
                 self._score_fields = {1: ScoreField(), -1: ScoreField()}
-
-                attack_data = {PLAYER1: None, PLAYER2: None}
+                self._attack_data = {PLAYER1: None, PLAYER2: None}
 
             # 試合開始前・発火後はキャプチャしないようにする
             if not self._is_valid:
@@ -48,23 +51,18 @@ class GetGameFlowUsecase(BaseUsecase):
                 if is_drawing:
                     self._board_fields[player_num].update_status()
 
-                    # 有効なデータのみ出力
-                    if attack_data[player_num] and \
-                            attack_data[player_num].is_valid:
+                    # TODO 攻撃終了時の処理
+                    if self._attack_data[player_num] and \
+                            self._attack_data[player_num].is_valid:
                         print()
-                        print(attack_data[player_num].__dict__)
+                        print(self._attack_data[player_num].__dict__)
 
-                    attack_data[player_num] = AttackData(player_num)
+                    self._attack_data[player_num] = AttackData(player_num)
 
                 # 連鎖時の処理
                 if is_chain:
                     self._board_fields[player_num].update_status()
-                    attack_data[player_num].is_valid = True
-                    if not attack_data[player_num].frame_num:
-                        attack_data[player_num].frame_num = frame_num
-                    attack_data[player_num].chain_num += 1
-                    attack_data[player_num].eliminated_num += len(
-                        self._board_fields[player_num].get_disappearing_puyo())
+                    self.chain_process(frame_num, player_num)
 
             cv2.imshow('PuyoPuyo Analyzer: Get Game Flow', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -72,3 +70,18 @@ class GetGameFlowUsecase(BaseUsecase):
 
         self._cap.release()
         cv2.destroyAllWindows()
+
+    def chain_process(self, frame_num, player_num):
+        # データを有効にする
+        self._attack_data[player_num].is_valid = True
+
+        # 連鎖開始時のフレーム番号を記録する
+        if not self._attack_data[player_num].frame_num:
+            self._attack_data[player_num].frame_num = frame_num
+
+        # 連鎖数を増やす
+        self._attack_data[player_num].chain_num += 1
+
+        # 消したぷよの数を加算する（おじゃまぷよは含めない）
+        self._attack_data[player_num].eliminated_num += \
+            len(self._board_fields[player_num].get_disappearing_puyo())

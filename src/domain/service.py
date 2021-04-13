@@ -26,8 +26,5 @@ def calc_zncc(roi_img: np.ndarray, tpl_img: np.ndarray) -> float:
     return zncc
 
 
-def get_disappearing(board_status: str):
-    for i in range(BOARD_ROW):
-        for j in range(BOARD_COLUMN):
-            offset = BOARD_ROW * j + i
+
 

@@ -1,8 +1,11 @@
 class AttackData:
-    def __init__(self, frame_num: int, player_num: int):
+    def __init__(self, player_num: int):
         self.is_valid = False
-        self.frame_num = frame_num
+        self.frame_num = None
         self.player_num = player_num
         self.chain_num = 0
         self.is_main_chain = False
+        self.eliminated_num = 0
         self.eliminated_percentage = 0
+        self.is_start = False
+        self.is_continue = False

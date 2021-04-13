@@ -54,13 +54,17 @@ class GetGameFlowUsecase(BaseUsecase):
                         print()
                         print(attack_data[player_num].__dict__)
 
-                    attack_data[player_num] = AttackData(frame_num, player_num)
+                    attack_data[player_num] = AttackData(player_num)
 
                 # 連鎖時の処理
                 if is_chain:
                     self._board_fields[player_num].update_status()
                     attack_data[player_num].is_valid = True
+                    if not attack_data[player_num].frame_num:
+                        attack_data[player_num].frame_num = frame_num
                     attack_data[player_num].chain_num += 1
+                    attack_data[player_num].eliminated_num += len(
+                        self._board_fields[player_num].get_disappearing_puyo())
 
             cv2.imshow('PuyoPuyo Analyzer: Get Game Flow', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):

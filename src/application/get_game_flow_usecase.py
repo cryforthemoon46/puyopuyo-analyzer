@@ -3,14 +3,16 @@ from tqdm import tqdm
 
 from config import *
 from ._base_usecase import BaseUsecase
-from ..domain.entity import BoardField, FieldManager, NextField, ScoreField
+from ..domain.entity import BoardField, FieldManager, GameFlowData, NextField, \
+    ScoreField
 from ..domain.value import AttackData
 
 
 class GetGameFlowUsecase(BaseUsecase):
     def __init__(self, input_path):
         super().__init__(input_path)
-        self._attack_data = {PLAYER1: AttackData(), PLAYER2: AttackData()}
+        self._attack_data = {PLAYER1: AttackData(1), PLAYER2: AttackData(1)}
+        self._game_flow_data = GameFlowData()
 
     def run(self):
         for frame_num in tqdm(range(self._total_frames)):
@@ -20,12 +22,14 @@ class GetGameFlowUsecase(BaseUsecase):
             # 試合開始時に初期化
             if field_manager.is_game_start():
                 # 前試合情報を出力
+                print(self._game_flow_data.format())
 
                 self._is_valid = True
                 self._board_fields = {1: BoardField(), -1: BoardField()}
                 self._next_fields = {1: NextField(self._fps),
                                      -1: NextField(self._fps)}
                 self._score_fields = {1: ScoreField(), -1: ScoreField()}
+                self._game_flow_data = GameFlowData()
 
             # 試合開始前・発火後はキャプチャしないようにする
             if not self._is_valid:
@@ -50,10 +54,22 @@ class GetGameFlowUsecase(BaseUsecase):
                 if is_drawing:
                     self._board_fields[player_num].update_status()
 
+                    # 攻撃終了後であれば保存
                     if self._attack_data[player_num].is_valid:
                         self.save_attack_data(player_num)
 
-                    self._attack_data[player_num] = AttackData()
+                        # おじゃまぷよについて計算する
+                        nuisance_count = \
+                            self._board_fields[player_num].nuisance_count
+                        if nuisance_count > 0:
+                            nuisance_data = AttackData(2)
+                            nuisance_data.frame_num = frame_num
+                            nuisance_data.nuisance = player_num
+                            nuisance_data.nuisance_count = nuisance_count
+                            self._game_flow_data.append(nuisance_data)
+
+                    # 新しいオブジェクトを作成する
+                    self._attack_data[player_num] = AttackData(1)
 
                 # 連鎖時の処理
                 if is_chain:
@@ -94,14 +110,22 @@ class GetGameFlowUsecase(BaseUsecase):
                 self._attack_data[player_num].is_start < 0:
             self._attack_data[player_num].is_start = 1
 
-        # TODO ラリーが継続しているか判定する
-
     def save_attack_data(self, player_num):
-        # 本線回収率を算出する
-        rest = len(self._board_fields[player_num])
-        eliminated = self._attack_data[player_num].eliminated_num
-        self._attack_data[player_num].eliminated_percentage = \
-            eliminated / (eliminated + rest)
+        # 本線かどうか判定する
+        is_main_chain = False
+        if str(self._board_fields[player_num])[
+           0: BOARD_ROW * BOARD_COLUMN: BOARD_ROW].count('-') > 0:
+            is_main_chain = True
 
-        print()
-        print(self._attack_data[player_num].__dict__)
+        # 本線回収率を算出する
+        if is_main_chain:
+            self._attack_data[player_num].is_main_chain = True
+            rest = len(self._board_fields[player_num])
+            eliminated = self._attack_data[player_num].eliminated_num
+            self._attack_data[player_num].eliminated_percentage = \
+                eliminated / (eliminated + rest)
+        else:
+            self._attack_data[player_num].is_main_chain = False
+
+        # 攻撃情報を保存
+        self._game_flow_data.append(self._attack_data[player_num])

@@ -67,6 +67,10 @@ class BoardField:
     def __str__(self):
         return self._current_status
 
+    @property
+    def nuisance_count(self):
+        return self._current_status.count('n')
+
     def forward(self, img: np.ndarray):
         self._frame_history.append(img)
         self._frame_history = self._frame_history[self._fps * -1:]

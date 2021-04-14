@@ -10,7 +10,7 @@ from ..domain.value import AttackData
 class GetGameFlowUsecase(BaseUsecase):
     def __init__(self, input_path):
         super().__init__(input_path)
-        self._attack_data = None
+        self._attack_data = {PLAYER1: AttackData(), PLAYER2: AttackData()}
 
     def run(self):
         for frame_num in tqdm(range(self._total_frames)):
@@ -26,7 +26,6 @@ class GetGameFlowUsecase(BaseUsecase):
                 self._next_fields = {1: NextField(self._fps),
                                      -1: NextField(self._fps)}
                 self._score_fields = {1: ScoreField(), -1: ScoreField()}
-                self._attack_data = {PLAYER1: None, PLAYER2: None}
 
             # 試合開始前・発火後はキャプチャしないようにする
             if not self._is_valid:
@@ -51,13 +50,10 @@ class GetGameFlowUsecase(BaseUsecase):
                 if is_drawing:
                     self._board_fields[player_num].update_status()
 
-                    # TODO 攻撃終了時の処理
-                    if self._attack_data[player_num] and \
-                            self._attack_data[player_num].is_valid:
-                        print()
-                        print(self._attack_data[player_num].__dict__)
+                    if self._attack_data[player_num].is_valid:
+                        self.save_attack_data(player_num)
 
-                    self._attack_data[player_num] = AttackData(player_num)
+                    self._attack_data[player_num] = AttackData()
 
                 # 連鎖時の処理
                 if is_chain:
@@ -79,9 +75,17 @@ class GetGameFlowUsecase(BaseUsecase):
         if not self._attack_data[player_num].frame_num:
             self._attack_data[player_num].frame_num = frame_num
 
+        # プレイヤー番号を記録する
+        if not self._attack_data[player_num].player_num:
+            self._attack_data[player_num].player_num = player_num
+
         # 連鎖数を増やす
         self._attack_data[player_num].chain_num += 1
 
         # 消したぷよの数を加算する（おじゃまぷよは含めない）
         self._attack_data[player_num].eliminated_num += \
             len(self._board_fields[player_num].get_disappearing_puyo())
+
+    def save_attack_data(self, player_num):
+        print()
+        print(self._attack_data[player_num].__dict__)

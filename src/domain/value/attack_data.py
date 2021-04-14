@@ -7,5 +7,5 @@ class AttackData:
         self.is_main_chain = False
         self.eliminated_num = 0
         self.eliminated_percentage = 0
-        self.is_start = False
-        self.is_continue = False
+        self.is_start = -1
+        self.is_continue = -1

@@ -86,6 +86,22 @@ class GetGameFlowUsecase(BaseUsecase):
         self._attack_data[player_num].eliminated_num += \
             len(self._board_fields[player_num].get_disappearing_puyo())
 
+        # ラリーのスタートかを判定する
+        if self._attack_data[player_num * -1].is_valid and \
+                self._attack_data[player_num].is_start < 0:
+            self._attack_data[player_num].is_start = 0
+        elif not self._attack_data[player_num * -1].is_valid and \
+                self._attack_data[player_num].is_start < 0:
+            self._attack_data[player_num].is_start = 1
+
+        # TODO ラリーが継続しているか判定する
+
     def save_attack_data(self, player_num):
+        # 本線回収率を算出する
+        rest = len(self._board_fields[player_num])
+        eliminated = self._attack_data[player_num].eliminated_num
+        self._attack_data[player_num].eliminated_percentage = \
+            eliminated / (eliminated + rest)
+
         print()
         print(self._attack_data[player_num].__dict__)

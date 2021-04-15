@@ -9,10 +9,14 @@ from ..domain.value import AttackData
 
 
 class GetGameFlowUsecase(BaseUsecase):
-    def __init__(self, input_path):
-        super().__init__(input_path)
+    def __init__(self, input_path: str):
+        super().__init__()
         self._attack_data = {PLAYER1: AttackData(1), PLAYER2: AttackData(1)}
         self._game_flow_data = GameFlowData()
+
+        self._cap = cv2.VideoCapture(input_path)
+        self._fps = self._cap.get(cv2.CAP_PROP_FPS)
+        self._total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     def run(self):
         for frame_num in tqdm(range(self._total_frames)):
@@ -22,7 +26,7 @@ class GetGameFlowUsecase(BaseUsecase):
             # 試合開始時に初期化
             if field_manager.is_game_start():
                 # 前試合情報を出力
-                print(self._game_flow_data.format())
+                self._game_flow_data.process()
 
                 self._is_valid = True
                 self._board_fields = {1: BoardField(), -1: BoardField()}
@@ -56,7 +60,7 @@ class GetGameFlowUsecase(BaseUsecase):
 
                     # 攻撃終了後であれば保存
                     if self._attack_data[player_num].is_valid:
-                        self.save_attack_data(player_num)
+                        self.save_attack_data(frame_num, player_num)
 
                         # おじゃまぷよについて計算する
                         nuisance_count = \
@@ -64,6 +68,7 @@ class GetGameFlowUsecase(BaseUsecase):
                         if nuisance_count > 0:
                             nuisance_data = AttackData(2)
                             nuisance_data.frame_num = frame_num
+                            nuisance_data.end_frame_num = frame_num
                             nuisance_data.nuisance = player_num
                             nuisance_data.nuisance_count = nuisance_count
                             self._game_flow_data.append(nuisance_data)
@@ -110,7 +115,10 @@ class GetGameFlowUsecase(BaseUsecase):
                 self._attack_data[player_num].is_start < 0:
             self._attack_data[player_num].is_start = 1
 
-    def save_attack_data(self, player_num):
+    def save_attack_data(self, frame_num: int, player_num: int):
+        # 攻撃終了時のフレーム数を記録
+        self._attack_data[player_num].end_frame_num = frame_num
+
         # 本線かどうか判定する
         is_main_chain = False
         if str(self._board_fields[player_num])[

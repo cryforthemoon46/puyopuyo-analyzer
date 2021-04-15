@@ -1,6 +1,7 @@
 class AttackData:
     def __init__(self, object_type):
         self.frame_num = None
+        self.end_frame_num = None
         self.object_type = object_type  # 1: Attack Data, 2: Nuisance Data
         self.is_valid = False
         self.player_num = None

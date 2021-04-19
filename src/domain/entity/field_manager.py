@@ -60,29 +60,38 @@ class FieldManager:
     _BOARD_AREA_YMIN = 106
     _BOARD_AREA_YMAX = 586
 
-    def __init__(self, img: np.ndarray):
-        self._img = img
-        self._board_area_xmin, self._board_area_xmax = find_board_x(img)
+    def __init__(self):
+        self._prev_frame = None
+        self._frame = None
+        self._board_area_xmin, self._board_area_xmax = None, None
+
+    def forward(self, frame: np.ndarray):
+        self._prev_frame = self._frame
+        self._frame = frame
+        self._board_area_xmin, self._board_area_xmax = find_board_x(frame)
 
     def get_next_field(self, player_num: int) -> np.ndarray:
-        return self._img[
+        return self._frame[
                self._NEXT_AREA_YMIN:self._NEXT_AREA_YMAX,
                self._NEXT_AREA_XMIN[player_num]:self._NEXT_AREA_XMAX[player_num]
                ]
 
     def get_score_field(self, player_num: int) -> np.ndarray:
-        return self._img[
+        return self._frame[
                self._SCORE_AREA_YMIN:self._SCORE_AREA_YMAX,
                self._SCORE_AREA_XMIN[player_num]:self._SCORE_AREA_XMAX[
                    player_num]
                ]
 
     def get_board_field(self, player_num: int) -> np.ndarray:
-        return self._img[
+        return self._frame[
                self._BOARD_AREA_YMIN:self._BOARD_AREA_YMAX,
                self._board_area_xmin[player_num]:self._board_area_xmax[
                    player_num]
                ]
 
-    def is_game_start(self) -> bool:
-        return np.mean(self._img) < self._BLACKOUT_THRESHOLD
+    def is_game_break(self) -> bool:
+        if not isinstance(self._prev_frame, np.ndarray):
+            return False
+        return np.mean(self._frame) < self._BLACKOUT_THRESHOLD <= np.mean(
+            self._prev_frame)

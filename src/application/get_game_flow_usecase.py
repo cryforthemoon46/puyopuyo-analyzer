@@ -21,10 +21,10 @@ class GetGameFlowUsecase(BaseUsecase):
     def run(self):
         for frame_num in tqdm(range(self._total_frames)):
             _, frame = self._cap.read()
-            field_manager = FieldManager(frame)
+            self._field_manager.forward(frame)
 
             # 試合開始時に初期化
-            if field_manager.is_game_start():
+            if self._field_manager.is_game_break():
                 # 前試合情報を出力
                 self._game_flow_data.process()
 
@@ -41,16 +41,18 @@ class GetGameFlowUsecase(BaseUsecase):
 
             for player_num in [PLAYER1, PLAYER2]:
                 # ネクスト領域を1フレーム進める
-                next_field_img = field_manager.get_next_field(player_num)
+                next_field_img = self._field_manager.get_next_field(player_num)
                 self._next_fields[player_num].forward(next_field_img)
                 is_drawing = self._next_fields[player_num].is_drawing
 
                 # 盤面領域を1フレーム進める
-                board_field_img = field_manager.get_board_field(player_num)
+                board_field_img = self._field_manager.get_board_field(
+                    player_num)
                 self._board_fields[player_num].forward(board_field_img)
 
                 # 得点領域を1フレーム進める
-                score_field_img = field_manager.get_score_field(player_num)
+                score_field_img = self._field_manager.get_score_field(
+                    player_num)
                 self._score_fields[player_num].forward(score_field_img)
                 is_chain = self._score_fields[player_num].is_chain
 
